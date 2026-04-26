@@ -1,115 +1,84 @@
+# ==============================
+# 1. Imports
+# ==============================
 import pandas as pd
-import json
+import numpy as np
 
-# -----------------------------
-# STEP 1: Load datasets
-# -----------------------------
-restaurants = pd.read_csv("new_orleans_restaurants.csv")
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.metrics import mean_squared_error, r2_score
 
-# Load business JSON (for attributes like price, takeout, etc.)
-business_data = []
-with open("yelp_academic_dataset_business.json", "r") as f:
-    for line in f:
-        business_data.append(json.loads(line))
-
-business_df = pd.DataFrame(business_data)
-
-# -----------------------------
-# STEP 2: Filter business data to only restaurants in your dataset
-# -----------------------------
-business_df = business_df[business_df["business_id"].isin(restaurants["business_id"])]
-
-# -----------------------------
-# STEP 3: Extract attributes safely
-# -----------------------------
-def get_attribute(attr_dict, key):
-    if isinstance(attr_dict, dict):
-        return attr_dict.get(key)
-    return None
-
-# Extract price range
-business_df["price_range"] = business_df["attributes"].apply(
-    lambda x: get_attribute(x, "RestaurantsPriceRange2")
-)
-
-# Extract binary features
-features = {
-    "takeout": "RestaurantsTakeOut",
-    "delivery": "RestaurantsDelivery",
-    "reservations": "RestaurantsReservations",
-    "outdoor_seating": "OutdoorSeating",
-    "good_for_kids": "GoodForKids"
-}
-
-for new_col, attr_name in features.items():
-    business_df[new_col] = business_df["attributes"].apply(
-        lambda x: get_attribute(x, attr_name)
-    )
-
-# -----------------------------
-# STEP 4: Clean binary features
-# -----------------------------
-def convert_to_binary(val):
-    if val in [True, "True", "true", 1]:
-        return 1
-    else:
-        return 0
-
-for col in features.keys():
-    business_df[col] = business_df[col].apply(convert_to_binary)
-
-# Convert price to numeric
-business_df["price_range"] = pd.to_numeric(business_df["price_range"], errors="coerce")
-
-# -----------------------------
-# STEP 5: Merge with restaurants CSV
-# -----------------------------
-merged_df = restaurants.merge(
-    business_df[
-        ["business_id", "price_range"] + list(features.keys())
-    ],
-    on="business_id",
-    how="left"
-)
-
-# -----------------------------
-# STEP 6: Build competition_density
-# -----------------------------
-competition = merged_df.groupby("postal_code").size().reset_index(name="competition_density")
-
-merged_df = merged_df.merge(competition, on="postal_code", how="left")
-
-# -----------------------------
-# STEP 7: Handle missing values
-# -----------------------------
-# Fill price with median
-merged_df["price_range"] = merged_df["price_range"].fillna(merged_df["price_range"].median())
-
-# Fill binary features with 0
-for col in features.keys():
-    merged_df[col] = merged_df[col].fillna(0)
-# -----------------------------
-# STEP 8: Final feature table
-# -----------------------------
-feature_table = merged_df[
-    [
-        "business_id",
-        "stars",
-        "review_count",
-        "price_range",
-        "takeout",
-        "delivery",
-        "reservations",
-        "outdoor_seating",
-        "good_for_kids",
-        "postal_code",
-        "competition_density"
-    ]
+import matplotlib.pyplot as plt
+# ==============================
+# 2. Load Data
+# ==============================
+# Use your engineered dataset
+df = pd.read_csv("final_feature_matrix.csv")
+# ==============================
+# 3. Select Features (UPDATED)
+# ==============================
+features = [
+    'review_count',
+    'review_frequency',
+    'avg_sentiment',
+    'checkin_count',
+    'price_range',
+    'takeout',
+    'delivery',
+    'reservations',
+    'outdoor_seating',
+    'good_for_kids',
+    'competition_density'
 ]
-# -----------------------------
-# STEP 9: Save output
-# -----------------------------
-feature_table.to_csv("week2_feature_table.csv", index=False)
 
-print("✅ Feature table created: feature_table.csv")
-print(feature_table.head())
+target = 'stars'
+
+# Drop missing values
+df = df[features + [target]].dropna()
+
+X = df[features]
+y = df[target]
+# ==============================
+# 4. Train/Test Split
+# ==============================
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42
+)
+# ==============================
+# 5. Train Random Forest
+# ==============================
+rf = RandomForestRegressor(
+    n_estimators=100,
+    max_depth=None,
+    random_state=42
+)
+
+rf.fit(X_train, y_train)
+# ==============================
+# 6. Predictions
+# ==============================
+y_pred = rf.predict(X_test)
+# ==============================
+# 7. Evaluation
+# ==============================
+rmse = np.sqrt(mean_squared_error(y_test, y_pred))
+r2 = r2_score(y_test, y_pred)
+
+print(f"RMSE: {rmse:.3f}")
+print(f"R^2: {r2:.3f}")
+# ==============================
+# 8. Feature Importance
+# ==============================
+importances = rf.feature_importances_
+feature_names = X.columns
+
+# Sort
+indices = np.argsort(importances)[::-1]
+
+# Plot
+plt.figure(figsize=(8,5))
+plt.title("Feature Importance (Random Forest)")
+plt.bar(range(len(importances)), importances[indices])
+plt.xticks(range(len(importances)), feature_names[indices], rotation=45)
+plt.tight_layout()
+plt.show()
