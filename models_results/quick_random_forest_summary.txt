@@ -1,0 +1,51 @@
+Quick Random Forest Restaurant Success Model
+========================================
+
+Target definition:
+- Success = Yelp stars >= 4.0
+
+Modeling sample:
+- Unique restaurants: 2,235
+- Positive class rate: 0.583
+- Train rows: 1,676
+- Test rows: 559
+
+Baseline:
+- Majority class: 1
+- Baseline accuracy: 0.583
+
+Chosen model:
+- Random Forest Classifier
+- Features: review_count, log_review_count, latitude, longitude, is_open, postal_code, TF-IDF of category text
+
+Test performance:
+- Accuracy: 0.678
+- ROC AUC: 0.752
+
+Classification report:
+              precision    recall  f1-score   support
+
+           0      0.620     0.588     0.604       233
+           1      0.716     0.742     0.729       326
+
+    accuracy                          0.678       559
+   macro avg      0.668     0.665     0.666       559
+weighted avg      0.676     0.678     0.677       559
+
+
+Top feature importances:
+- fast: 0.0648
+- fast food: 0.0562
+- review_count: 0.0470
+- log_review_count: 0.0457
+- latitude: 0.0444
+- longitude: 0.0418
+- restaurants: 0.0402
+- ZIP 70117: 0.0212
+- ZIP 70116: 0.0200
+- burgers: 0.0191
+- food: 0.0185
+- cajun/creole: 0.0177
+- bars: 0.0134
+- nightlife: 0.0133
+- is_open: 0.0132

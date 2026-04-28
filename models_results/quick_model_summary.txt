@@ -1,0 +1,63 @@
+Quick Restaurant Success Model
+========================================
+
+Target definition:
+- Success = Yelp stars >= 4.0
+
+Modeling sample:
+- Rows after removing malformed duplicate placeholder IDs: 2,235
+- Unique business IDs: 2,235
+- Positive class rate: 0.583
+- Train rows: 1,676
+- Test rows: 559
+
+Baseline:
+- Majority class: 1
+- Baseline accuracy: 0.583
+
+Chosen model:
+- Logistic Regression with balanced class weights
+- Features: review_count, log_review_count, latitude, longitude, is_open, postal_code, TF-IDF of category text
+
+Test performance:
+- Accuracy: 0.662
+- ROC AUC: 0.739
+
+Classification report:
+              precision    recall  f1-score   support
+
+           0      0.587     0.635     0.610       233
+           1      0.723     0.681     0.701       326
+
+    accuracy                          0.662       559
+   macro avg      0.655     0.658     0.656       559
+weighted avg      0.667     0.662     0.663       559
+
+
+Top positive predictors of 4.0+ stars:
+- categories__restaurants southern: 1.635
+- categories__shops: 1.286
+- categories__caribbean: 1.280
+- categories__food seafood: 1.128
+- zip__postal_code_70117: 1.045
+- categories__vegetarian: 1.044
+- categories__restaurants chicken: 1.008
+- categories__cocktail bars: 0.986
+- categories__cocktail: 0.986
+- categories__meat shops: 0.858
+- categories__food bakeries: 0.843
+- categories__lounges: 0.821
+
+Top negative predictors of 4.0+ stars:
+- categories__fast: -2.333
+- categories__fast food: -2.333
+- categories__steakhouses: -1.391
+- categories__cajun/creole: -1.261
+- categories__nightlife restaurants: -1.240
+- categories__diners: -1.142
+- categories__food specialty: -1.131
+- categories__mexican: -1.129
+- zip__postal_code_70128: -1.109
+- zip__postal_code_70121: -1.085
+- categories__chinese restaurants: -1.023
+- categories__pizza: -1.015
